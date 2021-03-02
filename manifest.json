@@ -1,6 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Auto Connect LinkedIn",
+    "description": "This extension use to auto connection in LinkedIn. If you feel it helpful, just support me.",
     "version": "1.0.0",
     "content_scripts": [
         {

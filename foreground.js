@@ -11,20 +11,50 @@ const SR_NOTE_AREA_SELECTOR =
 const SR_SEND_NOTE_BTN =
   "button.ml1.artdeco-button.artdeco-button--3.artdeco-button--primary.ember-view";
 
+let current_connection = 0;
+
+// LISTEN MESSAGE FROM BACKEND
 chrome.runtime.onMessage.addListener(gotMessage);
 
 // FUNCTIONS
 function gotMessage(message, sender, sendResponse) {
   console.log("I got message");
-  console.log("Msg template: " + message.msg_template);
-  console.log("Min time delay: " + message.min_time_delay);
-  console.log("Max time delay: " + message.max_time_delay);
-  console.log("Max user connect: " + message.max_user_connect);
+  let msgTemplate = message.msg_template;
+  let minTime = message.min_time_delay;
+  let maxTime = message.max_time_delay;
+  let maxConn = message.max_user_connect;
 
-  var rsList = document.querySelectorAll(`div.${SR_ITEM_DIV_CLASS}`);
+  let rsList = document.querySelectorAll(`div.${SR_ITEM_DIV_CLASS}`);
   console.log(rsList.length);
-  let userName = getNameFromItem(rsList[0]);
-  clickConnect(rsList[0], message.msg_template);
+
+  var i;
+  for (i = 0; i < rsList.length; i++) {
+    let item = rsList[i];
+    setTimeout(() => {
+      connectToUserItem(item, msgTemplate);
+    }, 500);
+    sleep(getRandomMilisecond(minTime * 1000 , maxTime * 1000));
+  }
+}
+
+// FUNCTION TO ACTION CONNECT TO USER
+function connectToUserItem(item, messageTemplate) {
+  let userName = getNameFromItem(item);
+  if (userName == null) {
+    console.log("Not found user");
+    return;
+  }
+  let clickConnectBtnSuccess = clickConnectButton(item);
+  if (clickConnectBtnSuccess) {
+    let addNoteSuccess = addNote(messageTemplate, userName);
+    if (addNoteSuccess) {
+      let sendConnectSucces = sendConnectInvite();
+      if (sendConnectSucces) {
+        current_connection += 1;
+        console.log("Connect to " + current_connection + " user");
+      }
+    }
+  }
 }
 
 function getRandomMilisecond(min, max) {
@@ -32,42 +62,57 @@ function getRandomMilisecond(min, max) {
 }
 
 function getNameFromItem(item) {
-  return item.querySelector(SR_NAME_SELECTOR).innerText;
+  let nameSpan =  item.querySelector(SR_NAME_SELECTOR);
+  console.log(nameSpan);
+  if (nameSpan) {
+    return nameSpan.innerText;
+  }
+  return null;
 }
 
-function clickConnect(item, messageTemplate) {
+function clickConnectButton(item) {
   let connectButton = item.querySelector(SR_CONNECT_BTN_SELECTOR);
-  setTimeout(() => {
-    connectButton.click();
-  }, 500);
-  let userName = getNameFromItem(item);
-  setTimeout(() => {
-      addNote(messageTemplate, userName);
-  }, 500);
+  if (connectButton) {
+    setTimeout(() => {
+      connectButton.click();
+    }, 500);
+  } else return false;
   return true;
 }
 
 function addNote(template, userName) {
   let content = template.replace("#NAME", userName);
   let addNoteBtn = document.querySelector(SR_ADD_NOTE_BTN_SELECTOR);
-  setTimeout(() => {
-    addNoteBtn.click();
-    let inputTextArea = document.querySelector(SR_NOTE_AREA_SELECTOR);
-    if (inputTextArea) {
-      let nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-        window.HTMLTextAreaElement.prototype,
-        "value"
-      ).set;
-      nativeInputValueSetter.call(inputTextArea, content);
-      let ev = new Event("input", { bubbles: true });
-      inputTextArea.dispatchEvent(ev);
+  if (addNoteBtn) {
+    setTimeout(() => {
+      addNoteBtn.click();
+      let inputTextArea = document.querySelector(SR_NOTE_AREA_SELECTOR);
+      if (inputTextArea) {
+        let nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLTextAreaElement.prototype,
+          "value"
+        ).set;
+        nativeInputValueSetter.call(inputTextArea, content);
+        let ev = new Event("input", { bubbles: true });
+        inputTextArea.dispatchEvent(ev);
+        return true;
+      }
+    }, 500);
+  }
+  return false;
+}
 
-      let sendNoteBtn = document.querySelector(SR_SEND_NOTE_BTN);
-      setTimeout(() => {
-          console.log(sendNoteBtn);
-      }, 500);
-    } else {
-      // TODO:
-    }
-  }, 500);
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function sendConnectInvite() {
+  let sendNoteBtn = document.querySelector(SR_SEND_NOTE_BTN);
+  if (sendNoteBtn) {
+    setTimeout(() => {
+      console.log(sendNoteBtn);
+    }, 500);
+    return true;
+  }
+  return false;
 }
