@@ -39,6 +39,7 @@ function gotMessage(message, sender, sendResponse) {
 }
 
 async function action() {
+  await delay(5000);
   let rsList = document.querySelectorAll(`div.${SR_ITEM_DIV_CLASS}`);
     for (i = 0; i < rsList.length; i++){
       let item = rsList[i];
@@ -47,7 +48,7 @@ async function action() {
       if (current_connection >= maxConnect) break;
       await delay(getRandomMilisecond(minDelay, maxDelay));
     }
-    if (current_connection > 0 && current_connection % 10 == 0) {
+    if (current_connection < maxConnect) {
       let nextPageBtn = document.querySelector(NEXT_PAGE_BTN);
       console.log("i = " + i);
       console.log("current = " + current_connection);
