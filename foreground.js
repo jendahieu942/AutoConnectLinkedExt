@@ -9,9 +9,11 @@ const SR_NOTE_AREA_SELECTOR =
   "textarea.ember-text-area.ember-view.send-invite__custom-message.mb3";
 const SR_SEND_NOTE_BTN =
   "button.ml1.artdeco-button.artdeco-button--3.artdeco-button--primary.ember-view";
-const SR_CLOSE_CONNECT_MODAL = "button.artdeco-modal__dismiss.artdeco-button.artdeco-button--circle.artdeco-button--muted.artdeco-button--2.artdeco-button--tertiary.ember-view";
+const SR_CLOSE_CONNECT_MODAL =
+  "button.artdeco-modal__dismiss.artdeco-button.artdeco-button--circle.artdeco-button--muted.artdeco-button--2.artdeco-button--tertiary.ember-view";
 
-const NEXT_PAGE_BTN = "button.artdeco-pagination__button.artdeco-pagination__button--next.artdeco-button.artdeco-button--muted.artdeco-button--icon-right.artdeco-button--1.artdeco-button--tertiary.ember-view"
+const NEXT_PAGE_BTN =
+  "button.artdeco-pagination__button.artdeco-pagination__button--next.artdeco-button.artdeco-button--muted.artdeco-button--icon-right.artdeco-button--1.artdeco-button--tertiary.ember-view";
 
 let current_connection = 0;
 let minDelay = 0;
@@ -25,7 +27,6 @@ let doing = false;
 // LISTEN MESSAGE FROM BACKEND
 chrome.runtime.onMessage.addListener(gotMessage);
 
-
 // FUNCTIONS
 function gotMessage(message, sender, sendResponse) {
   console.log("I got message");
@@ -37,54 +38,32 @@ function gotMessage(message, sender, sendResponse) {
   action();
 }
 
-function action() {
-  console.log("doing = " + doing);
-  setTimeout(() => {
-    let rsList = document.querySelectorAll(`div.${SR_ITEM_DIV_CLASS}`);
-    console.log(rsList.length);
-    if (!doing) actionForList(rsList, i); /// bugs
-    if (current_connection > 0 && (current_connection % 10 == 0 || !doing)) {
-      window.scrollBy(0, 500);
+async function action() {
+  let rsList = document.querySelectorAll(`div.${SR_ITEM_DIV_CLASS}`);
+    for (i = 0; i < rsList.length; i++){
+      let item = rsList[i];
+      actionItem(item);
+      item.scrollTop = item.scrollHeight;
+      if (current_connection >= maxConnect) break;
+      await delay(getRandomMilisecond(minDelay, maxDelay));
     }
-    if (current_connection < maxConnect && !doing) {
-      if (retries++ == 100) return;
+    if (current_connection > 0 && current_connection % 10 == 0) {
       let nextPageBtn = document.querySelector(NEXT_PAGE_BTN);
+      console.log("i = " + i);
+      console.log("current = " + current_connection);
       console.log(nextPageBtn);
       if (nextPageBtn) {
         nextPageBtn.click();
         console.log("Oping next page");
         i = 0;
+        await action();
       } else {
         console.log("No Next Page");
       }
-      action();
     }
-  }, 10000);
 }
 
-function actionForList(resultList, it) {
-  doing = true;
-  setTimeout(() => {
-    let item = resultList[it];
-    if (it >= resultList.length) {
-      doing = false;
-      return;
-    }
-    connectToUserItem(item, msgTemplate);
-    if (current_connection >= maxConnect) {
-      doing = false;
-      return;
-    }
-    console.log('current = ' + current_connection);
-    if (it++ < resultList.length) {
-      actionForList(resultList, it);
-    }
-  }, getRandomMilisecond(minDelay, maxDelay));
-  console.log("i am doing = " + doing);
-}
-
-// FUNCTION TO ACTION CONNECT TO USER
-function connectToUserItem(item, messageTemplate) {
+async function actionItem(item) {
   // GET NAME
   let userName = getNameFromItem(item);
   if (userName == null) {
@@ -97,42 +76,37 @@ function connectToUserItem(item, messageTemplate) {
     // CLICK CONNECT
     connectButton.click();
     // ADD NOTE
-    setTimeout(() => {
-      let content = messageTemplate.replace("#NAME", userName);
-      let addNoteBtn = document.querySelector(SR_ADD_NOTE_BTN_SELECTOR);
-      if (addNoteBtn) {
-        addNoteBtn.click();
-        let inputTextArea = document.querySelector(SR_NOTE_AREA_SELECTOR);
-        if (inputTextArea) {
-          let nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-            window.HTMLTextAreaElement.prototype,
-            "value"
-          ).set;
-          nativeInputValueSetter.call(inputTextArea, content);
-          let ev = new Event("input", { bubbles: true });
-          inputTextArea.dispatchEvent(ev);
-          console.log(content);
+    let content = msgTemplate.replace("#NAME", userName);
+    let addNoteBtn = document.querySelector(SR_ADD_NOTE_BTN_SELECTOR);
+    if (addNoteBtn) {
+      addNoteBtn.click();
+      let inputTextArea = document.querySelector(SR_NOTE_AREA_SELECTOR);
+      if (inputTextArea) {
+        let nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLTextAreaElement.prototype,
+          "value"
+        ).set;
+        nativeInputValueSetter.call(inputTextArea, content);
+        let ev = new Event("input", { bubbles: true });
+        inputTextArea.dispatchEvent(ev);
+        console.log(content);
 
-          // SENT WITH NOTE
-          setTimeout(() => {
-            let sendNoteBtn = document.querySelector(SR_SEND_NOTE_BTN);
-            if (sendNoteBtn) {
-              console.log(sendNoteBtn); // TODO: click
-
-              // CLOSE MODAL
-              setTimeout(() => {
-                let closeBtn = document.querySelector(SR_CLOSE_CONNECT_MODAL);
-                console.log(closeBtn);
-                if (closeBtn) {
-                  closeBtn.click();
-                  current_connection += 1;
-                }
-              }, 200);
-            }
-          }, 500);
+        // SENT WITH NOTE
+        let sendNoteBtn = document.querySelector(SR_SEND_NOTE_BTN);
+        if (sendNoteBtn) {
+          console.log(sendNoteBtn); // TODO: click
+          
+          await delay(1000);
+          // CLOSE MODAL
+          let closeBtn = document.querySelector(SR_CLOSE_CONNECT_MODAL);
+          console.log(closeBtn);
+          if (closeBtn) {
+            closeBtn.click();
+            current_connection += 1;
+          }
         }
       }
-    }, 500);
+    }
   }
 }
 
@@ -141,10 +115,18 @@ function getRandomMilisecond(min, max) {
 }
 
 function getNameFromItem(item) {
-  console.log("Get Name");
   let nameSpan = item.querySelector(SR_NAME_SELECTOR);
   if (nameSpan != null) {
     return nameSpan.innerText;
   }
   return null;
+}
+
+function delay(n) {  
+  n = n || 2000;
+  return new Promise(done => {
+    setTimeout(() => {
+      done();
+    }, n);
+  });
 }
