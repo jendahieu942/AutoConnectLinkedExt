@@ -6,6 +6,8 @@ let checkBoxMessageTemplate = document.getElementById("rememberText");
 let checkBoxTimeDelay = document.getElementById("rememberTime");
 let checkBoxMaxConnect = document.getElementById("rememberMaxConnect");
 let startActionBtn = document.getElementById("startActionBtn");
+let connected = null;
+let lastTime = null;
 
 let notificationDiv = document.getElementById("notification");
 notificationDiv.innerText = "Click vào nút ở trên là chạy thôi";
@@ -31,6 +33,8 @@ chrome.storage.sync.get(
     "acl_chbox_msg",
     "acl_chbox_time",
     "acl_chbox_conn",
+    "acl_connected",
+    "acl_last_time"
   ],
   (object) => {
     messageTemplate.value = object.acl_msg_templ ? object.acl_msg_templ : "";
@@ -42,6 +46,9 @@ chrome.storage.sync.get(
     checkBoxMessageTemplate.checked = object.acl_chbox_msg;
     checkBoxTimeDelay.checked = object.acl_chbox_time;
     checkBoxMaxConnect.checked = object.acl_chbox_conn;
+    connected = object.acl_connected ? object.acl_connected : connected;
+    lastTime = object.acl_last_time ? object.acl_last_time : lastTime;
+    if (connected != null) displayNotification(connected, lastTime);
   }
 );
 
@@ -53,6 +60,16 @@ function setAction() {
   let maxConn = parseNumber(maxUserConnect.value);
 
   if (!checkParams(msgTempl, minTime, maxTime, maxConn)) {
+    return;
+  }
+  if (connected != null && connected >= maxUserConnect.value) {
+    if (notificationDiv.classList.contains('notification-active')) {
+      notificationDiv.classList.remove('notification-active');
+      notificationDiv.classList.add('notification');
+    }
+    let warning = "Đã kết nối tới " + connected + " người. \nLast update: " + lastTime;
+    warning += "\nĐÃ ĐẠT MAX_CONNECT = " + maxUserConnect.value;
+    notificationDiv.innerText = warning;
     return;
   }
   notificationDiv.innerText = "OK";
@@ -82,7 +99,7 @@ function setAction() {
       msg_template: msgTempl,
       min_time_delay: minTime,
       max_time_delay: maxTime,
-      max_user_connect: maxConn
+      max_user_connect: maxConn - (connected ? connected: 0)
     };
 
     const payload = {
@@ -117,16 +134,16 @@ function checkParams(msgTempl, minTime, maxTime, maxConn) {
     notificationDiv.innerText = "❌ Not found #NAME in template message";
     return false;
   }
-  if (minTime == null || maxTime == null) {
-    notificationDiv.innerText = "❌ Time delay must be set";
+  if (minTime == null || maxTime == null || minTime <= 0 || maxTime <= 0) {
+    notificationDiv.innerText = "❌ Time delay must be set and greater than 0";
     return false;
   }
   if (maxTime < minTime) {
     notificationDiv.innerText = "❌ minTime must be less than maxTime";
     return false;
   }
-  if (maxConn == null) {
-    notificationDiv.innerText = "❌ Max connect must be set";
+  if (maxConn == null || maxConn <= 0) {
+    notificationDiv.innerText = "❌ Max connect must be set and greater than 0";
     return false;
   }
   return true;
@@ -141,13 +158,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   let data = message.data;
   console.log(message);
   if (action === 'update') {
-    notificationDiv.classList.remove('notification');
-    if (!notificationDiv.classList.contains('notification-active')) {
-      notificationDiv.classList.add('notification-active');
-    }
-    notificationDiv.innerText = "Đã kết nối tới "
-      + data.connected
-      + " người. \nLast update: "
-      + new Date().toTimeString();
+    connected = (connected ? connected : 0) + data.connected;
+    chrome.storage.sync.set({ acl_connected: connected, acl_last_time: new Date().toTimeString() })
+    displayNotification(connected, new Date().toTimeString());
   }
 })
+
+function displayNotification(currentConn, lastTime) {
+  notificationDiv.classList.remove('notification');
+  if (!notificationDiv.classList.contains('notification-active')) {
+    notificationDiv.classList.add('notification-active');
+  }
+  notificationDiv.innerText = "Đã kết nối tới " + currentConn + " người. \nLast update: " + lastTime;
+}
