@@ -43,7 +43,7 @@ async function action() {
     for (i = 0; i < rsList.length; i++){
       let item = rsList[i];
       actionItem(item);
-      item.scrollTop = item.scrollHeight;
+      item.scrollIntoView();
       if (current_connection >= maxConnect) break;
       await delay(getRandomMilisecond(minDelay, maxDelay));
     }
