@@ -10,6 +10,8 @@ let startActionBtn = document.getElementById("startActionBtn");
 let notificationDiv = document.getElementById("notification");
 notificationDiv.innerText = "Click vào nút ở trên là chạy thôi";
 
+let tabId;
+
 // INPUT ACTION
 messageTemplate.addEventListener("input", clearNotification);
 minDelayTime.addEventListener("input", clearNotification);
@@ -56,32 +58,37 @@ function setAction() {
   notificationDiv.innerText = "OK";
 
   const payload = {
-      acl_msg_templ: checkBoxMessageTemplate.checked ? msgTempl: null,
-      acl_min_delay: checkBoxTimeDelay.checked ? minTime: null,
-      acl_max_delay: checkBoxTimeDelay.checked ? maxTime: null,
-      acl_max_connect: checkBoxMaxConnect.checked ? maxConn: null,
-      acl_chbox_msg: checkBoxMessageTemplate.checked ? true: false,
-      acl_chbox_time: checkBoxTimeDelay.checked ? true: false,
-      acl_chbox_conn: checkBoxMaxConnect.checked ? true: false
+    acl_msg_templ: checkBoxMessageTemplate.checked ? msgTempl : null,
+    acl_min_delay: checkBoxTimeDelay.checked ? minTime : null,
+    acl_max_delay: checkBoxTimeDelay.checked ? maxTime : null,
+    acl_max_connect: checkBoxMaxConnect.checked ? maxConn : null,
+    acl_chbox_msg: checkBoxMessageTemplate.checked ? true : false,
+    acl_chbox_time: checkBoxTimeDelay.checked ? true : false,
+    acl_chbox_conn: checkBoxMaxConnect.checked ? true : false
   };
 
   // SAVE SETTINGS
   chrome.storage.sync.set(payload);
 
   // CALL ACTION TO FOREGROUND
-  chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (!tabs[0].url.includes('https://www.linkedin.com')) {
       notificationDiv.innerText = "❌ Go to https://www.linkedin.com to user this extension";
       return;
     }
+    let tabId = tabs[0].id;
 
-    const payload = {
+    const data = {
       msg_template: msgTempl,
       min_time_delay: minTime,
       max_time_delay: maxTime,
       max_user_connect: maxConn
     };
 
+    const payload = {
+      action: "start",
+      data: data
+    }
     chrome.tabs.sendMessage(tabs[0].id, payload);
   })
 }
@@ -94,6 +101,9 @@ function parseNumber(stringValue) {
 }
 
 function checkParams(msgTempl, minTime, maxTime, maxConn) {
+  if (!notificationDiv.classList.contains('notification')) {
+    notificationDiv.classList.add('notification');
+  }
   if (msgTempl.length == 0) {
     notificationDiv.innerText = "❌ Message template could not empty";
     return false;
@@ -125,3 +135,19 @@ function checkParams(msgTempl, minTime, maxTime, maxConn) {
 function clearNotification() {
   notificationDiv.innerText = "";
 }
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  let action = message.action;
+  let data = message.data;
+  console.log(message);
+  if (action === 'update') {
+    notificationDiv.classList.remove('notification');
+    if (!notificationDiv.classList.contains('notification-active')) {
+      notificationDiv.classList.add('notification-active');
+    }
+    notificationDiv.innerText = "Đã kết nối tới "
+      + data.connected
+      + " người. \nLast update: "
+      + new Date().toTimeString();
+  }
+})

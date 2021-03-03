@@ -29,16 +29,18 @@ chrome.runtime.onMessage.addListener(gotMessage);
 
 // FUNCTIONS
 function gotMessage(message, sender, sendResponse) {
-  console.log("I got message");
-  msgTemplate = message.msg_template;
-  minDelay = message.min_time_delay;
-  maxDelay = message.max_time_delay;
-  maxConnect = message.max_user_connect;
-
-  action();
+  let action = message.action;
+  let data = message.data;
+  
+  console.log("action = " + action + ", data = " + data);
+  msgTemplate = data.msg_template;
+  minDelay = data.min_time_delay;
+  maxDelay = data.max_time_delay;
+  maxConnect = data.max_user_connect;
+  doAction();
 }
 
-async function action() {
+async function doAction() {
   await delay(5000);
   let rsList = document.querySelectorAll(`div.${SR_ITEM_DIV_CLASS}`);
     for (i = 0; i < rsList.length; i++){
@@ -57,7 +59,7 @@ async function action() {
         nextPageBtn.click();
         console.log("Oping next page");
         i = 0;
-        await action();
+        await doAction();
       } else {
         console.log("No Next Page");
       }
@@ -104,6 +106,7 @@ async function actionItem(item) {
           if (closeBtn) {
             closeBtn.click();
             current_connection += 1;
+            chrome.runtime.sendMessage({action: "update", data: {connected: current_connection}})
           }
         }
       }
