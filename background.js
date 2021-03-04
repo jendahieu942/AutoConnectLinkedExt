@@ -6,6 +6,7 @@ let checkBoxMessageTemplate = document.getElementById("rememberText");
 let checkBoxTimeDelay = document.getElementById("rememberTime");
 let checkBoxMaxConnect = document.getElementById("rememberMaxConnect");
 let startActionBtn = document.getElementById("startActionBtn");
+let resetBtn = document.getElementById("resetBtn");
 let connected = null;
 let lastTime = null;
 
@@ -22,6 +23,9 @@ maxUserConnect.addEventListener("input", clearNotification);
 
 // CLICK BUTTON
 startActionBtn.addEventListener("click", setAction);
+
+// RESET
+resetBtn.addEventListener('click', resetMaxConnect);
 
 // OTHER
 chrome.storage.sync.get(
@@ -51,6 +55,26 @@ chrome.storage.sync.get(
     if (connected != null) displayNotification(connected, lastTime);
   }
 );
+
+function resetMaxConnect() {
+  chrome.storage.sync.get(
+    [
+      "acl_connected",
+      "acl_last_time"
+    ],
+    (object) => {
+      if (object.acl_connected) {
+        chrome.storage.sync.remove('acl_connected');
+        connected = 0;
+      }
+      if (object.acl_last_time) {
+        chrome.storage.sync.remove('acl_last_time');
+        lastTime = null;
+      }
+      notificationDiv.innerText = "Reseted current connect to 0";
+    }
+  )
+}
 
 // FUNCTION
 function setAction() {
@@ -99,7 +123,7 @@ function setAction() {
       msg_template: msgTempl,
       min_time_delay: minTime,
       max_time_delay: maxTime,
-      max_user_connect: maxConn - (connected ? connected: 0)
+      max_user_connect: maxConn - (connected ? connected : 0)
     };
 
     const payload = {
@@ -158,7 +182,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   let data = message.data;
   console.log(message);
   if (action === 'update') {
-    connected = (connected ? connected : 0) + data.connected;
+    connected = (connected ? connected : 0) + 1;
     chrome.storage.sync.set({ acl_connected: connected, acl_last_time: new Date().toTimeString() })
     displayNotification(connected, new Date().toTimeString());
   }

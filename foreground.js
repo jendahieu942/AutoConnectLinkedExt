@@ -44,10 +44,10 @@ async function doAction() {
   await delay(5000);
   let rsList = document.querySelectorAll(`div.${SR_ITEM_DIV_CLASS}`);
     for (i = 0; i < rsList.length; i++){
+      if (current_connection >= maxConnect) break;
       let item = rsList[i];
       actionItem(item);
       item.scrollIntoView();
-      if (current_connection >= maxConnect) break;
       await delay(getRandomMilisecond(minDelay, maxDelay));
     }
     if (current_connection < maxConnect) {
