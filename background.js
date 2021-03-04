@@ -5,6 +5,7 @@ let maxUserConnect = document.getElementById("maxUserConnect");
 let checkBoxMessageTemplate = document.getElementById("rememberText");
 let checkBoxTimeDelay = document.getElementById("rememberTime");
 let checkBoxMaxConnect = document.getElementById("rememberMaxConnect");
+let pageType = document.querySelector("input[name=type_page]:checked").value;
 let startActionBtn = document.getElementById("startActionBtn");
 let resetBtn = document.getElementById("resetBtn");
 let connected = 0;
@@ -40,7 +41,8 @@ chrome.storage.sync.get(
     "acl_chbox_conn",
     "acl_connected",
     "acl_last_time",
-    "acl_action"
+    "acl_action",
+    "acl_page_type"
   ],
   (object) => {
     messageTemplate.value = object.acl_msg_templ ? object.acl_msg_templ : "";
@@ -55,9 +57,12 @@ chrome.storage.sync.get(
     connected = object.acl_connected ? object.acl_connected : connected;
     lastTime = object.acl_last_time ? object.acl_last_time : lastTime;
     action = object.acl_action ? object.acl_action : action;
+    pageType = object.acl_page_type ? object.acl_page_type : pageType;
+
     status = (action == "stop") ? 0 : 1;
     if (connected != null) displayNotification(connected, lastTime);
     displayActionBtn();
+    document.getElementById(pageType).checked = true;
   }
 );
 
@@ -87,11 +92,16 @@ function setAction() {
   let minTime = parseNumber(minDelayTime.value);
   let maxTime = parseNumber(maxDelayTime.value);
   let maxConn = parseNumber(maxUserConnect.value);
+  pageType = document.querySelector("input[name=type_page]:checked").value;
 
   if (!checkParams(msgTempl, minTime, maxTime, maxConn)) {
     return;
   }
   if (connected != null && connected >= maxUserConnect.value) {
+    action = "stop";
+    status = 0;
+    chrome.storage.sync.set({ acl_action: action });
+    displayActionBtn();
     if (notificationDiv.classList.contains('notification-active')) {
       notificationDiv.classList.remove('notification-active');
       notificationDiv.classList.add('notification');
@@ -109,7 +119,8 @@ function setAction() {
     acl_max_connect: checkBoxMaxConnect.checked ? maxConn : null,
     acl_chbox_msg: checkBoxMessageTemplate.checked ? true : false,
     acl_chbox_time: checkBoxTimeDelay.checked ? true : false,
-    acl_chbox_conn: checkBoxMaxConnect.checked ? true : false
+    acl_chbox_conn: checkBoxMaxConnect.checked ? true : false,
+    acl_page_type: pageType
   };
 
   // SAVE SETTINGS
@@ -124,14 +135,15 @@ function setAction() {
 
     status = 1 - status;
     displayActionBtn();
-    chrome.storage.sync.set({acl_action: action});
+    chrome.storage.sync.set({ acl_action: action });
 
     const data = {
       msg_template: msgTempl,
       min_time_delay: minTime,
       max_time_delay: maxTime,
       max_user_connect: maxConn,
-      current_connect: connected
+      current_connect: connected,
+      page_type: pageType
     };
 
     const payload = {

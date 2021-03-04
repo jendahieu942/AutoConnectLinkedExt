@@ -85,7 +85,7 @@
 
 <body>
     <div class="general">
-        <textarea id="messageTemplate" cols="50" rows="10"
+        <textarea id="messageTemplate" cols="50" rows="7"
             placeholder="Dear Mrs. #NAME &#10;I am HT Vccorp..."></textarea>
         <p>Time delay between each connect action [min, max]</p>
         <div class="clearfix">
@@ -102,6 +102,8 @@
             Maximum user connect: <input class="f-right" id="maxUserConnect" placeholder="maximum connection"
                 title="maximumConnection" value="50" />
         </div>
+        <hr />
+        <p>Select what i remember?</p>
         <div>
             <fieldset style="margin-right: 0; margin-left: 0">
                 <legend>Remember:</legend>
@@ -118,6 +120,19 @@
                         <input type="checkbox" id="rememberMaxConnect" />
                         <span>Max connect</span>
                     </label>
+                </div>
+            </fieldset>
+        </div>
+        <hr />
+        <p>Select what type of page?</p>
+        <div>
+            <fieldset style="margin-right: 0; margin-left: 0">
+                <legend>Select Page Type</legend>
+                <div>
+                    <input type="radio" id="search" name="type_page" value="search" checked="checked">
+                    <label for="male">Search</label><br>
+                    <input type="radio" id="alumni" name="type_page" value="alumni">
+                    <label for="female">Alumni Org</label>
                 </div>
             </fieldset>
         </div>

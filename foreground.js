@@ -1,25 +1,32 @@
 const SR_ITEM_DIV_CLASS = "entity-result__item";
-const SR_NAME_SELECTOR =
-  "div > div.entity-result__content.entity-result__divider.pt3.pb3.t-12.t-black--light > div.mb1 > div > div.t-roman.t-sans > span > div > span.entity-result__title-line.flex-shrink-1.entity-result__title-text--black > span > a > span > span:nth-child(1)";
-const SR_CONNECT_BTN_SELECTOR =
+const ALUMNI_ITEM_DIV_CLASS = "org-people-profile-card";
+
+const SR_NAME_SELECTOR = "span.entity-result__title-text.t-16 > a > span > span:nth-child(1)";
+const ALUMNI_NAME_SELECTOR = "div.org-people-profile-card__profile-title.t-black.lt-line-clamp.lt-line-clamp--single-line.ember-view";
+
+const CONNECT_BTN_SELECTOR =
   "button.artdeco-button.artdeco-button--2.artdeco-button--secondary.ember-view";
-const SR_ADD_NOTE_BTN_SELECTOR =
+const ADD_NOTE_BTN_SELECTOR =
   "button.mr1.artdeco-button.artdeco-button--muted.artdeco-button--3.artdeco-button--secondary.ember-view";
-const SR_NOTE_AREA_SELECTOR =
+const NOTE_AREA_SELECTOR =
   "textarea.ember-text-area.ember-view.send-invite__custom-message.mb3";
-const SR_SEND_NOTE_BTN =
+const SEND_NOTE_BTN =
   "button.ml1.artdeco-button.artdeco-button--3.artdeco-button--primary.ember-view";
-const SR_CLOSE_CONNECT_MODAL =
+const CLOSE_CONNECT_MODAL =
   "button.artdeco-modal__dismiss.artdeco-button.artdeco-button--circle.artdeco-button--muted.artdeco-button--2.artdeco-button--tertiary.ember-view";
 
-const NEXT_PAGE_BTN =
+const SR_NEXT_PAGE_BTN =
   "button.artdeco-pagination__button.artdeco-pagination__button--next.artdeco-button.artdeco-button--muted.artdeco-button--icon-right.artdeco-button--1.artdeco-button--tertiary.ember-view";
+
+let ITEM_DIV_CLASS;
+let NAME_SELECTOR;
 
 let current_connection = 0;
 let minDelay = 0;
 let maxDelay = 0;
 let maxConnect = 1;
 let msgTemplate = "";
+let pageType = "search";
 var i = 0;
 var retries = 0;
 let doing = false;
@@ -33,23 +40,39 @@ function gotMessage(message, sender, sendResponse) {
   let data = message.data;
 
   console.log("action = " + action);
-  console.log("data = " + data);
 
   msgTemplate = data.msg_template;
   minDelay = data.min_time_delay;
   maxDelay = data.max_time_delay;
   maxConnect = data.max_user_connect;
   current_connection = data.current_connect ? data.current_connect : current_connection;
+  pageType = data.page_type;
+
+  console.log(pageType);
+
+  ITEM_DIV_CLASS = pageType == "search" ? SR_ITEM_DIV_CLASS : ALUMNI_ITEM_DIV_CLASS;
+  NAME_SELECTOR = pageType == "search" ? SR_NAME_SELECTOR : ALUMNI_NAME_SELECTOR;
+
   doing = (action == "start");
   if (doing) doAction();
 }
 
 async function doAction() {
   await delay(5000);
-  let rsList = document.querySelectorAll(`div.${SR_ITEM_DIV_CLASS}`);
+  let rawList = document.querySelectorAll(`div.${ITEM_DIV_CLASS}`);
+  // Filter 
+  let rsList = [];
+  for (var j = 0; j < rawList.length; j++) {
+    let rawItem = rawList[j];
+    if (rawItem.querySelector(CONNECT_BTN_SELECTOR)) {
+      rsList.push(rawItem);
+    } else {
+      console.log("Ignore user: " + getNameFromItem(rawItem));
+    }
+  }
+  // Real action
   for (i = 0; i < rsList.length; i++) {
     if (!doing) {
-      console.log("doing = " + doing);
       break;
     }
     if (current_connection >= maxConnect) break;
@@ -60,7 +83,7 @@ async function doAction() {
   }
   if (doing) {
     if (current_connection < maxConnect) {
-      let nextPageBtn = document.querySelector(NEXT_PAGE_BTN);
+      let nextPageBtn = document.querySelector(SR_NEXT_PAGE_BTN);
       console.log("i = " + i);
       console.log("current = " + current_connection);
       console.log(nextPageBtn);
@@ -84,16 +107,16 @@ async function actionItem(item) {
     return;
   }
   // START CONNECT
-  let connectButton = item.querySelector(SR_CONNECT_BTN_SELECTOR);
+  let connectButton = item.querySelector(CONNECT_BTN_SELECTOR);
   if (connectButton) {
     // CLICK CONNECT
     connectButton.click();
     // ADD NOTE
     let content = msgTemplate.replace("#NAME", userName);
-    let addNoteBtn = document.querySelector(SR_ADD_NOTE_BTN_SELECTOR);
+    let addNoteBtn = document.querySelector(ADD_NOTE_BTN_SELECTOR);
     if (addNoteBtn) {
       addNoteBtn.click();
-      let inputTextArea = document.querySelector(SR_NOTE_AREA_SELECTOR);
+      let inputTextArea = document.querySelector(NOTE_AREA_SELECTOR);
       if (inputTextArea) {
         let nativeInputValueSetter = Object.getOwnPropertyDescriptor(
           window.HTMLTextAreaElement.prototype,
@@ -105,7 +128,7 @@ async function actionItem(item) {
         console.log(content);
 
         // SENT WITH NOTE
-        let sendNoteBtn = document.querySelector(SR_SEND_NOTE_BTN);
+        let sendNoteBtn = document.querySelector(SEND_NOTE_BTN);
         if (sendNoteBtn) {
           sendNoteBtn.click();
           await delay(1000);
@@ -122,7 +145,7 @@ function getRandomMilisecond(min, max) {
 }
 
 function getNameFromItem(item) {
-  let nameSpan = item.querySelector(SR_NAME_SELECTOR);
+  let nameSpan = item.querySelector(NAME_SELECTOR);
   if (nameSpan != null) {
     return nameSpan.innerText;
   }
