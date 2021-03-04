@@ -34,8 +34,8 @@
         .action_div {
             margin-top: 5px;
         }
-        
-        .general > p {
+
+        .general>p {
             font-weight: 600;
         }
 
@@ -58,6 +58,28 @@
             font-weight: 600;
             font-size: 1.2em;
         }
+
+        .button {
+            background-color: #4CAF50;
+            /* Green */
+            border: none;
+            color: white;
+            padding: 5px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .button-stop {
+            background-color: rgb(248, 61, 61);
+        }
+
+        .action_reset {
+            padding-top: 5px;
+        }
     </style>
 </head>
 
@@ -67,15 +89,18 @@
             placeholder="Dear Mrs. #NAME &#10;I am HT Vccorp..."></textarea>
         <p>Time delay between each connect action [min, max]</p>
         <div class="clearfix">
-            Min (second): <input class="f-right" id="minDelayTime" placeholder="minimum second" title="minDelayTime" value="5"/>
+            Min (second): <input class="f-right" id="minDelayTime" placeholder="minimum second" title="minDelayTime"
+                value="5" />
         </div>
         <div class="clearfix">
-            Max (second): <input class="f-right" id="maxDelayTime" placeholder="maximum second" title="minDelayTime" value="10"/>
+            Max (second): <input class="f-right" id="maxDelayTime" placeholder="maximum second" title="minDelayTime"
+                value="10" />
         </div>
-        <hr/>
+        <hr />
         <p>Maximum user connect today [Recommend less than 50]</p>
         <div class="clearfix">
-            Maximum user connect: <input class="f-right" id="maxUserConnect" placeholder="maximum connection" title="maximumConnection" value="50" />
+            Maximum user connect: <input class="f-right" id="maxUserConnect" placeholder="maximum connection"
+                title="maximumConnection" value="50" />
         </div>
         <div>
             <fieldset style="margin-right: 0; margin-left: 0">
@@ -98,10 +123,10 @@
         </div>
     </div>
     <div class="action_div">
-        <button style="width: 100%" id="startActionBtn">Start Auto Connect ▶</button>
+        <button class="button" style="width: 100%" id="startActionBtn">Start Auto Connect ⏯</button>
     </div>
     <div class="action_reset">
-        <button style="width: 100%" id="resetBtn">Rest MaxConnect</button>
+        <button class="button" style="width: 100%" id="resetBtn">Rest Current Connect</button>
     </div>
     <div class="notification" style="font-style:italic" id="notification"></div>
     <script src="background.js"></script>
