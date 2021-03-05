@@ -64,7 +64,8 @@ async function doAction() {
   let rsList = [];
   for (var j = 0; j < rawList.length; j++) {
     let rawItem = rawList[j];
-    if (rawItem.querySelector(CONNECT_BTN_SELECTOR)) {
+    let connectButton = rawItem.querySelector(CONNECT_BTN_SELECTOR);
+    if (connectButton && !connectButton.disabled) {
       rsList.push(rawItem);
     } else {
       console.log("Ignore user: " + getNameFromItem(rawItem));
