@@ -1,5 +1,5 @@
-const SR_ITEM_DIV_CLASS = "entity-result__item";
-const ALUMNI_ITEM_DIV_CLASS = "org-people-profile-card";
+const SR_ITEM_CARD = "div.entity-result__item";
+const ALUMNI_ITEM_CARD = "li.org-people-profiles-module__profile-item";
 
 const SR_NAME_SELECTOR = "span.entity-result__title-text.t-16 > a > span > span:nth-child(1)";
 const ALUMNI_NAME_SELECTOR = "div.org-people-profile-card__profile-title.t-black.lt-line-clamp.lt-line-clamp--single-line.ember-view";
@@ -9,7 +9,7 @@ const CONNECT_BTN_SELECTOR =
 const ADD_NOTE_BTN_SELECTOR =
   "button.mr1.artdeco-button.artdeco-button--muted.artdeco-button--3.artdeco-button--secondary.ember-view";
 const NOTE_AREA_SELECTOR =
-  "textarea.ember-text-area.ember-view.send-invite__custom-message.mb3";
+  "textarea.ember-text-area.ember-view.connect-button-send-invite__custom-message.mb3";
 const SEND_NOTE_BTN =
   "button.ml1.artdeco-button.artdeco-button--3.artdeco-button--primary.ember-view";
 const CLOSE_CONNECT_MODAL =
@@ -50,7 +50,7 @@ function gotMessage(message, sender, sendResponse) {
 
   console.log(pageType);
 
-  ITEM_DIV_CLASS = pageType == "search" ? SR_ITEM_DIV_CLASS : ALUMNI_ITEM_DIV_CLASS;
+  ITEM_DIV_CLASS = pageType == "search" ? SR_ITEM_CARD : ALUMNI_ITEM_CARD;
   NAME_SELECTOR = pageType == "search" ? SR_NAME_SELECTOR : ALUMNI_NAME_SELECTOR;
 
   doing = (action == "start");
@@ -59,7 +59,7 @@ function gotMessage(message, sender, sendResponse) {
 
 async function doAction() {
   await delay(5000);
-  let rawList = document.querySelectorAll(`div.${ITEM_DIV_CLASS}`);
+  let rawList = document.querySelectorAll(ITEM_DIV_CLASS);
   // Filter 
   let rsList = [];
   for (var j = 0; j < rawList.length; j++) {
